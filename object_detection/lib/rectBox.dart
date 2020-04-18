@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
-import 'package:object_detection/models.dart';
+import 'loader.dart';
 
-class RectBox extends StatelessWidget {
+class ResultState extends StatelessWidget {
   final List<dynamic> results;
   final int previewH;
   final int previewW;
@@ -11,12 +11,12 @@ class RectBox extends StatelessWidget {
   final double screenW;
   final String model;
 
-  RectBox(this.results, this.previewH, this.previewW, this.screenH, this.screenW,
-      this.model);
+  ResultState(this.results, this.previewH, this.previewW, this.screenH,
+      this.screenW, this.model);
 
+  String label = ' ';
   @override
   Widget build(BuildContext context) {
-
     List<Widget> _renderBoxes() {
       return results.map((re) {
         var _x = re["rect"]["x"];
@@ -44,7 +44,9 @@ class RectBox extends StatelessWidget {
           h = _h * scaleH;
           if (_y < difH / 2) h -= (difH / 2 - _y) * scaleH;
         }
-        debugPrint("${re["detectedClass"]} ${(re["confidenceInClass"] * 100).toStringAsFixed(0)}%");
+        debugPrint(
+            "${re["detectedClass"]} ${(re["confidenceInClass"] * 100).toStringAsFixed(0)}%");
+        label = re["detectedClass"].toString();
         return Positioned(
           left: math.max(0, x),
           top: math.max(0, y),
@@ -58,20 +60,20 @@ class RectBox extends StatelessWidget {
                 width: 3.0,
               ),
             ),
-            child: Text(
+            /*child: Text(
               "${re["detectedClass"]} ${(re["confidenceInClass"] * 100).toStringAsFixed(0)}%",
               style: TextStyle(
                 color: Color.fromRGBO(37, 213, 253, 1.0),
                 fontSize: 14.0,
                 fontWeight: FontWeight.bold,
               ),
-            ),
+            ),*/
           ),
         );
       }).toList();
     }
 
-    List<Widget> _renderStrings() {
+    /*List<Widget> _renderStrings() {
       
       double offset = -10;
       return results.map((re) {
@@ -92,9 +94,9 @@ class RectBox extends StatelessWidget {
           ),
         );
       }).toList();
-    }
+    }*/
 
-    List<Widget> _renderKeypoints() {
+    /*List<Widget> _renderKeypoints() {
       var lists = <Widget>[];
       results.forEach((re) {
         var list = re["keypoints"].values.map<Widget>((k) {
@@ -136,10 +138,62 @@ class RectBox extends StatelessWidget {
       });
 
       return lists;
-    }
+    }*/
 
     return Stack(
-      children: model == mobilenet ? _renderStrings() : model ==posenet ? _renderKeypoints() : _renderBoxes(),
+      //children: model == mobilenet ? _renderStrings() : model ==posenet ? _renderKeypoints() : _renderBoxes(),
+      children: <Widget>[
+        Stack(children: _renderBoxes()),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: Container(
+              height: screenH * 0.2,
+              width: screenW * 0.7,
+              margin: EdgeInsets.all(30),
+              decoration: BoxDecoration(
+                  color: Colors.white60,
+                  borderRadius: BorderRadius.all(new Radius.circular(20.0)),
+                  //border: Border.all(),
+                  /*boxShadow: [
+                    BoxShadow(
+                      color: Colors.white10,
+                      //color: Colors.red,
+                      blurRadius: 1.0,
+                      spreadRadius: 2.0,
+                    ),
+                  ]*/
+                  ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: <Widget>[
+                  AnimatedOpacity(
+                    opacity: label == ' ' ? 1 : 0,
+                    duration: Duration(milliseconds: 200),
+                    child: ColorLoader5(
+                      dotOneColor: Colors.red,
+                      dotTwoColor: Colors.green,
+                      dotThreeColor: Colors.blue,
+                      dotType: DotType.circle,
+                      dotIcon: Icon(Icons.adjust),
+                      duration: Duration(seconds: 1),
+                    ),
+                  ),
+                  AnimatedOpacity(
+                    opacity: label == ' ' ? 0 : 1,
+                    duration: Duration(milliseconds: 200),
+                    child: Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  )
+                ],
+              )),
+        )
+      ],
     );
   }
 }

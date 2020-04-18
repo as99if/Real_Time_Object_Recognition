@@ -1,19 +1,21 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:object_detection/models.dart';
 import 'package:tflite/tflite.dart';
 import 'dart:math' as math;
 
-typedef void Callback(List<dynamic> list, int h, int w);
+import 'loader.dart';
+import 'models.dart';
+import 'rectBox.dart';
+
+//typedef void Callback(List<dynamic> list, int h, int w);
 
 class CameraView extends StatefulWidget {
   final List<CameraDescription> cameras;
-  final Callback setRecognitions;
-  final String model;
+  //final Callback setRecognitions;
+  //final String model;
 
-  CameraView(this.cameras, this.model, this.setRecognitions);
+  CameraView(this.cameras);
 
-  //CameraView(this._cameraController);
   @override
   _CameraViewState createState() => new _CameraViewState();
 }
@@ -22,9 +24,15 @@ class _CameraViewState extends State<CameraView> {
   CameraController controller;
   bool isDetecting = false;
 
+  List<dynamic> _recognitions;
+  int _imageHeight = 0;
+  int _imageWidth = 0;
+  String _model = ssd;
+
   @override
   void initState() {
     super.initState();
+    _loadModel();
     _initCamera();
   }
 
@@ -33,18 +41,56 @@ class _CameraViewState extends State<CameraView> {
     super.setState(fn);
   }
 
+  setRecognitions(recognitions, imageHeight, imageWidth) {
+    setState(() {
+      _recognitions = recognitions;
+      _imageHeight = imageHeight;
+      _imageWidth = imageWidth;
+    });
+  }
+
+  _loadModel() async {
+    String res;
+    res = await Tflite.loadModel(
+            model: "assets/ssd_mobilenet.tflite",
+            labels: "assets/ssd_mobilenet.txt");
+    /*switch (_model) {
+      case yolo:
+        res = await Tflite.loadModel(
+          model: "assets/yolov2_tiny.tflite",
+          labels: "assets/yolov2_tiny.txt",
+        );
+        break;
+
+      case mobilenet:
+        res = await Tflite.loadModel(
+            model: "assets/mobilenet_v1_1.0_224.tflite",
+            labels: "assets/mobilenet_v1_1.0_224.txt");
+        break;
+
+      case posenet:
+        res = await Tflite.loadModel(
+            model: "assets/posenet_mv1_075_float_from_checkpoints.tflite");
+        break;
+
+      default: // ssd
+        res = await Tflite.loadModel(
+            model: "assets/ssd_mobilenet.tflite",
+            labels: "assets/ssd_mobilenet.txt");
+    }*/
+    debugPrint(res);
+  }
+
   _initCamera() {
     if (widget.cameras == null || widget.cameras.length < 1) {
       debugPrint('No camera is found');
     } else {
-      debugPrint("Model: " + widget.model);
+      debugPrint("Model: " + _model);
 
       controller = new CameraController(
-        widget.cameras[0],
-        ResolutionPreset.high,
-        enableAudio: false
-      );
-      
+          widget.cameras[0], ResolutionPreset.high,
+          enableAudio: false);
+
       controller.initialize().then((_) {
         if (!mounted) {
           return;
@@ -56,10 +102,27 @@ class _CameraViewState extends State<CameraView> {
             //sleep(Duration(milliseconds: 1500));
             //widget.setRecognitions([], 0, 0);
             isDetecting = true;
-
             int startTime = new DateTime.now().millisecondsSinceEpoch;
 
-            if (widget.model == 'mobilenet') {
+            Tflite.detectObjectOnFrame(
+              // default
+              bytesList: img.planes.map((plane) {
+                return plane.bytes;
+              }).toList(),
+              model: "SSDMobileNet",
+              imageHeight: img.height,
+              imageWidth: img.width,
+              imageMean: 127.5,
+              imageStd: 127.5,
+              numResultsPerClass: 1,
+              threshold: 0.7, //widget.model == yolo ? 0.2 : 0.4,
+            ).then((recognitions) {
+              int endTime = new DateTime.now().millisecondsSinceEpoch;
+              debugPrint("Detection took ${endTime - startTime}");
+              setRecognitions(recognitions, img.height, img.width);
+              isDetecting = false;
+            });
+            /*if (widget.model == 'mobilenet') {
               Tflite.runModelOnFrame(
                 bytesList: img.planes.map((plane) {
                   return plane.bytes;
@@ -92,7 +155,7 @@ class _CameraViewState extends State<CameraView> {
                 isDetecting = false;
               });
             } else {    
-              Tflite.detectObjectOnFrame(
+              Tflite.detectObjectOnFrame(   // default
                 bytesList: img.planes.map((plane) {
                   return plane.bytes;
                 }).toList(),
@@ -111,33 +174,22 @@ class _CameraViewState extends State<CameraView> {
 
                 isDetecting = false;
               });
-            }
+            }*/
           }
         });
       });
     }
   }
 
-  
-
-  @override
-  Widget build(BuildContext context) {
-    if (controller == null || !controller.value.isInitialized) {
-      return Center(
-        child: SizedBox(
-          width: 32,
-          height: 32,
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
+  Widget buildCameraView(BuildContext context) {
+    
 
     var tmp = MediaQuery.of(context).size;
     var screenH = math.max(tmp.height, tmp.width);
     var screenW = math.min(tmp.height, tmp.width);
-    tmp = controller.value.previewSize;
-    var previewH = math.max(tmp.height, tmp.width);
-    var previewW = math.min(tmp.height, tmp.width);
+    var previewSize = controller.value.previewSize;
+    var previewH = math.max(previewSize.height, previewSize.width);
+    var previewW = math.min(previewSize.height, previewSize.width);
     var screenRatio = screenH / screenW;
     var previewRatio = previewH / previewW;
 
@@ -147,13 +199,44 @@ class _CameraViewState extends State<CameraView> {
         child: CameraPreview(controller))
         */
         OverflowBox(
-          maxHeight:
-              screenRatio > previewRatio ? screenH : screenW / previewW * previewH,
-          maxWidth:
-              screenRatio > previewRatio ? screenH / previewH * previewW : screenW,
-          child: CameraPreview(controller),
-        );
+      /*eight: MediaQuery.of(context).size.height * 0.5,
+              width: MediaQuery.of(context).size.width * 0.7, */
+      maxHeight: //MediaQuery.of(context).size.height * 0.,
+          screenRatio > previewRatio ? screenH : screenW / previewW * previewH,
+      maxWidth: //MediaQuery.of(context).size.width * 0.7,
+          screenRatio > previewRatio ? screenH / previewH * previewW : screenW,
+      child: CameraPreview(controller),
+    );
     //);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (controller == null || !controller.value.isInitialized) {
+      return Center(
+        child: ColorLoader2(
+          color1: Colors.red,
+          color2: Colors.green,
+          color3: Colors.blue,
+        ),
+      );
+    }
+    Size screen = MediaQuery.of(context).size;
+    return Scaffold(
+      //appBar: AppBar(),
+      body: Stack(
+        children: [
+          buildCameraView(context),
+          ResultState(
+              _recognitions == null ? [] : _recognitions,
+              math.max(_imageHeight, _imageWidth),
+              math.min(_imageHeight, _imageWidth),
+              screen.height,
+              screen.width,
+              _model),
+        ],
+      ),
+    );
   }
 
   @override

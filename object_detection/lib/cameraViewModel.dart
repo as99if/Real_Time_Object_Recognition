@@ -1,26 +1,26 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:object_detection/cameraView.dart';
-import 'package:object_detection/models.dart';
-import 'package:object_detection/rectBox.dart';
 import 'dart:math' as math;
 import 'package:tflite/tflite.dart';
+
+import 'cameraView.dart';
+import 'models.dart';
+import 'rectBox.dart';
 
 class CameraViewModel extends StatefulWidget {
   final List<CameraDescription> cameras;
   CameraViewModel(this.cameras);
-  
+
   @override
   _CameraViewModelState createState() => new _CameraViewModelState();
 }
 
 class _CameraViewModelState extends State<CameraViewModel> {
-
-
   List<dynamic> _recognitions;
   int _imageHeight = 0;
   int _imageWidth = 0;
-  String _model = ssd;    // mobilenet , yolo , posenet
+  String _model = ssd; // mobilenet , yolo , posenet
+  
   @override
   void initState() {
     loadModel();
@@ -29,8 +29,10 @@ class _CameraViewModelState extends State<CameraViewModel> {
 
   loadModel() async {
     String res;
-    
-    switch (_model) {
+    res = await Tflite.loadModel(
+            model: "assets/ssd_mobilenet.tflite",
+            labels: "assets/ssd_mobilenet.txt");
+    /*switch (_model) {
       case yolo:
         res = await Tflite.loadModel(
           model: "assets/yolov2_tiny.tflite",
@@ -49,11 +51,11 @@ class _CameraViewModelState extends State<CameraViewModel> {
             model: "assets/posenet_mv1_075_float_from_checkpoints.tflite");
         break;
 
-      default:    // ssd
+      default: // ssd
         res = await Tflite.loadModel(
             model: "assets/ssd_mobilenet.tflite",
             labels: "assets/ssd_mobilenet.txt");
-    }
+    }*/
     debugPrint(res);
   }
 
@@ -77,12 +79,12 @@ class _CameraViewModelState extends State<CameraViewModel> {
       //appBar: AppBar(),
       body: Stack(
         children: [
-          CameraView(
+          /*CameraView(
             widget.cameras,
             _model,
             setRecognitions,
-          ),
-          RectBox(
+          ),*/
+          ResultState(
               _recognitions == null ? [] : _recognitions,
               math.max(_imageHeight, _imageWidth),
               math.min(_imageHeight, _imageWidth),
