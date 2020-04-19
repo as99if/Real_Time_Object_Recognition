@@ -1,19 +1,16 @@
+import 'package:ObejectOE/translate.dart';
 import 'package:camera/camera.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:tflite/tflite.dart';
 import 'dart:math' as math;
 
-import 'loader.dart';
 import 'models.dart';
 import 'rectBox.dart';
-
-//typedef void Callback(List<dynamic> list, int h, int w);
+import 'widgets/loader.dart';
 
 class CameraView extends StatefulWidget {
   final List<CameraDescription> cameras;
-  //final Callback setRecognitions;
-  //final String model;
-
   CameraView(this.cameras);
 
   @override
@@ -25,13 +22,18 @@ class _CameraViewState extends State<CameraView> {
   bool isDetecting = false;
 
   List<dynamic> _recognitions;
+  Map<String, dynamic> rec;
   int _imageHeight = 0;
   int _imageWidth = 0;
   String _model = ssd;
+  Translate translator;
+
+  static String secondaryLanguage = "en-bn";
 
   @override
   void initState() {
     super.initState();
+    translator = Translate(lang: secondaryLanguage);
     _loadModel();
     _initCamera();
   }
@@ -52,32 +54,9 @@ class _CameraViewState extends State<CameraView> {
   _loadModel() async {
     String res;
     res = await Tflite.loadModel(
-            model: "assets/ssd_mobilenet.tflite",
-            labels: "assets/ssd_mobilenet.txt");
-    /*switch (_model) {
-      case yolo:
-        res = await Tflite.loadModel(
-          model: "assets/yolov2_tiny.tflite",
-          labels: "assets/yolov2_tiny.txt",
-        );
-        break;
+        model: "assets/ssd_mobilenet.tflite",
+        labels: "assets/ssd_mobilenet.txt");
 
-      case mobilenet:
-        res = await Tflite.loadModel(
-            model: "assets/mobilenet_v1_1.0_224.tflite",
-            labels: "assets/mobilenet_v1_1.0_224.txt");
-        break;
-
-      case posenet:
-        res = await Tflite.loadModel(
-            model: "assets/posenet_mv1_075_float_from_checkpoints.tflite");
-        break;
-
-      default: // ssd
-        res = await Tflite.loadModel(
-            model: "assets/ssd_mobilenet.tflite",
-            labels: "assets/ssd_mobilenet.txt");
-    }*/
     debugPrint(res);
   }
 
@@ -100,9 +79,7 @@ class _CameraViewState extends State<CameraView> {
         controller.startImageStream((CameraImage img) {
           if (!isDetecting) {
             //sleep(Duration(milliseconds: 1500));
-            //widget.setRecognitions([], 0, 0);
             isDetecting = true;
-            int startTime = new DateTime.now().millisecondsSinceEpoch;
 
             Tflite.detectObjectOnFrame(
               // default
@@ -117,64 +94,9 @@ class _CameraViewState extends State<CameraView> {
               numResultsPerClass: 1,
               threshold: 0.7, //widget.model == yolo ? 0.2 : 0.4,
             ).then((recognitions) {
-              int endTime = new DateTime.now().millisecondsSinceEpoch;
-              debugPrint("Detection took ${endTime - startTime}");
               setRecognitions(recognitions, img.height, img.width);
               isDetecting = false;
             });
-            /*if (widget.model == 'mobilenet') {
-              Tflite.runModelOnFrame(
-                bytesList: img.planes.map((plane) {
-                  return plane.bytes;
-                }).toList(),
-                imageHeight: img.height,
-                imageWidth: img.width,
-                numResults: 2,
-              ).then((recognitions) {
-                int endTime = new DateTime.now().millisecondsSinceEpoch;
-                print("Detection took ${endTime - startTime}");
-
-                widget.setRecognitions(recognitions, img.height, img.width);
-
-                isDetecting = false;
-              });
-            } else if (widget.model == 'posenet') {
-              Tflite.runPoseNetOnFrame(
-                bytesList: img.planes.map((plane) {
-                  return plane.bytes;
-                }).toList(),
-                imageHeight: img.height,
-                imageWidth: img.width,
-                numResults: 2,
-              ).then((recognitions) {
-                int endTime = new DateTime.now().millisecondsSinceEpoch;
-                print("Detection took ${endTime - startTime}");
-
-                widget.setRecognitions(recognitions, img.height, img.width);
-
-                isDetecting = false;
-              });
-            } else {    
-              Tflite.detectObjectOnFrame(   // default
-                bytesList: img.planes.map((plane) {
-                  return plane.bytes;
-                }).toList(),
-                model: widget.model == yolo ? "YOLO" : "SSDMobileNet",
-                imageHeight: img.height,
-                imageWidth: img.width,
-                imageMean: widget.model == yolo ? 0 : 127.5,
-                imageStd: widget.model == yolo ? 255.0 : 127.5,
-                numResultsPerClass: 1,
-                threshold: 0.55, //widget.model == yolo ? 0.2 : 0.4,
-              ).then((recognitions) {
-                int endTime = new DateTime.now().millisecondsSinceEpoch;
-                debugPrint("Detection took ${endTime - startTime}");
-
-                widget.setRecognitions(recognitions, img.height, img.width);
-
-                isDetecting = false;
-              });
-            }*/
           }
         });
       });
@@ -182,8 +104,6 @@ class _CameraViewState extends State<CameraView> {
   }
 
   Widget buildCameraView(BuildContext context) {
-    
-
     var tmp = MediaQuery.of(context).size;
     var screenH = math.max(tmp.height, tmp.width);
     var screenW = math.min(tmp.height, tmp.width);
@@ -193,21 +113,13 @@ class _CameraViewState extends State<CameraView> {
     var screenRatio = screenH / screenW;
     var previewRatio = previewH / previewW;
 
-    return /*SafeArea(
-        child: AspectRatio(
-        aspectRatio: controller.value.aspectRatio,
-        child: CameraPreview(controller))
-        */
-        OverflowBox(
-      /*eight: MediaQuery.of(context).size.height * 0.5,
-              width: MediaQuery.of(context).size.width * 0.7, */
-      maxHeight: //MediaQuery.of(context).size.height * 0.,
+    return OverflowBox(
+      maxHeight:
           screenRatio > previewRatio ? screenH : screenW / previewW * previewH,
-      maxWidth: //MediaQuery.of(context).size.width * 0.7,
+      maxWidth:
           screenRatio > previewRatio ? screenH / previewH * previewW : screenW,
       child: CameraPreview(controller),
     );
-    //);
   }
 
   @override
@@ -223,19 +135,63 @@ class _CameraViewState extends State<CameraView> {
     }
     Size screen = MediaQuery.of(context).size;
     return Scaffold(
-      //appBar: AppBar(),
       body: Stack(
         children: [
           buildCameraView(context),
           ResultState(
-              _recognitions == null ? [] : _recognitions,
-              math.max(_imageHeight, _imageWidth),
-              math.min(_imageHeight, _imageWidth),
-              screen.height,
-              screen.width,
-              _model),
+            _recognitions == null ? [] : _recognitions,
+            math.max(_imageHeight, _imageWidth),
+            math.min(_imageHeight, _imageWidth),
+            screen.height,
+            screen.width,
+            _model,
+            translator,
+          ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => languagePickerPopUp(), //languagePickerPopUp(context),
+        backgroundColor: Colors.black,
+        child: Icon(
+          Icons.translate,
+          size: 24,
+        ),
+        shape: CircleBorder(),
+      ),
+    );
+  }
+
+  List<Text> languageList = [
+    Text('Bengali'),
+    Text('Latin'),
+    Text('Japanese'),
+    Text('Spanish'),
+  ];
+  static int _selectedLangauageIndex = 0;
+  FixedExtentScrollController scrollController =
+      FixedExtentScrollController(initialItem: _selectedLangauageIndex);
+
+  Future<void> languagePickerPopUp() async {
+    return showCupertinoModalPopup<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return Row(
+          children: <Widget>[
+            Container(
+              height: 350,
+              width: MediaQuery.of(context).size.width,
+              child: CupertinoPicker(
+                itemExtent: 25,
+                onSelectedItemChanged: (int index) {
+                  _selectedLangauageIndex = index;
+                },
+                children: languageList,
+                scrollController: scrollController,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

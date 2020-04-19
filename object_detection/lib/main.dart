@@ -1,4 +1,5 @@
 
+import 'package:ObejectOE/translate.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'cameraView.dart';

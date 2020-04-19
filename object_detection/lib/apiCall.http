@@ -1,0 +1,16 @@
+
+### api key = trnsl.1.1.20200419T120127Z.07520ede1b22f6e4.cc0825931d625b77b3f800d4b1bc468203b4e55d
+### translate
+GET https://translate.yandex.net/api/v1.5/tr.json/translate?key=trnsl.1.1.20200419T120127Z.07520ede1b22f6e4.cc0825931d625b77b3f800d4b1bc468203b4e55d&text=Hello&lang=en-bn
+ ###
+
+### supported languages
+GET https://translate.yandex.net/api/v1.5/tr.json/getLangs?key=trnsl.1.1.20200419T120127Z.07520ede1b22f6e4.cc0825931d625b77b3f800d4b1bc468203b4e55d
+
+
+### detect language
+https://translate.yandex.net/api/v1.5/tr.json/detect
+ ? key=<API key>
+ & text=<text>
+ & [hint=<list of probable text languages>]
+ & [callback=<name of the callback function>]
