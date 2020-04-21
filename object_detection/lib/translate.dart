@@ -6,14 +6,12 @@ import 'header.dart';
 import 'package:http/http.dart' show Client;
 
 class Translate{
-  final String lang;
   String url;
   String translated_text='';
-
-  Translate({this.lang});
   
   Client client = Client();
-  Future<String> getTranslation(String text) async {
+
+  Future<String> getTranslation(String text, String lang) async {
     url = "https://${getBaseUrl()}translate?key=${getApiKey()}&text=$text&lang=$lang";
     final response = await client.get(url);
     if (response.statusCode == 200) {
@@ -25,8 +23,8 @@ class Translate{
       }
   }
 
-  String translate(String text){
-    getTranslation(text).then((String result){
+  String translate(String text, String lang){
+    getTranslation(text, lang).then((String result){
       debugPrint(result);
       translated_text = result;
     });

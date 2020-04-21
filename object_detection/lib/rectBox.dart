@@ -1,4 +1,3 @@
-import 'package:ObejectOE/translate.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
@@ -11,69 +10,74 @@ class ResultState extends StatelessWidget {
   final int previewW;
   final double screenH;
   final double screenW;
-  final String model;
 
-  final Translate translator;
+  final String label;
+  final String translated_label;
 
   ResultState(this.results, this.previewH, this.previewW, this.screenH,
-      this.screenW, this.model, this.translator);
+      this.screenW, this.label, this.translated_label);
 
-  static String label = '';
-  static String translated_label = '';
   @override
   Widget build(BuildContext context) {
-    List<Widget> _renderBoxes() {
-      return results.map((re) {
-        var _x = re["rect"]["x"];   // ei part ta camera view e handle kore
-        var _w = re["rect"]["w"];   // only (x,y,w,h, label, translated_labe) ekhane pass korbo
-        var _y = re["rect"]["y"];
-        var _h = re["rect"]["h"];
-        var scaleW, scaleH, x, y, w, h;
+    /*void _renderBoxes(var results) {
+    // ssd mobilenet
+    if (results.toString() == '[]') {
+      // mobilenet
+      label = '';
+      translated_label = '';
+    }
+    return results.map((re) {
+      var _x = re["rect"]["x"]; // ei part ta camera view e handle kore
+      var _w = re["rect"]
+          ["w"]; // only (x,y,w,h, label, translated_labe) ekhane pass korbo
+      var _y = re["rect"]["y"];
+      var _h = re["rect"]["h"];
+      var scaleW, scaleH, x, y, w, h;
 
-        if (screenH / screenW > previewH / previewW) {
-          scaleW = screenH / previewH * previewW;
-          scaleH = screenH;
-          var difW = (scaleW - screenW) / scaleW;
-          x = (_x - difW / 2) * scaleW;
-          w = _w * scaleW;
-          if (_x < difW / 2) w -= (difW / 2 - _x) * scaleW;
-          y = _y * scaleH;
-          h = _h * scaleH;
-        } else {
-          scaleH = screenW / previewW * previewH;
-          scaleW = screenW;
-          var difH = (scaleH - screenH) / scaleH;
-          x = _x * scaleW;
-          w = _w * scaleW;
-          y = (_y - difH / 2) * scaleH;
-          h = _h * scaleH;
-          if (_y < difH / 2) h -= (difH / 2 - _y) * scaleH;
-        }
-        debugPrint(
-            "${re["detectedClass"]} ${(re["confidenceInClass"] * 100).toStringAsFixed(0)}%");
-        label = re["detectedClass"].toString();
-        translated_label = translator.translate(label);
-        return Positioned(
-          left: math.max(0, x),
-          top: math.max(0, y),
-          width: w,
-          height: h,
-          child: Container(
-            padding: EdgeInsets.only(top: 5.0, left: 5.0),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: Color.fromRGBO(37, 213, 253, 1.0),
-                width: 3.0,
-              ),
+      if (screenH / screenW > previewH / previewW) {
+        scaleW = screenH / previewH * previewW;
+        scaleH = screenH;
+        var difW = (scaleW - screenW) / scaleW;
+        x = (_x - difW / 2) * scaleW;
+        w = _w * scaleW;
+        if (_x < difW / 2) w -= (difW / 2 - _x) * scaleW;
+        y = _y * scaleH;
+        h = _h * scaleH;
+      } else {
+        scaleH = screenW / previewW * previewH;
+        scaleW = screenW;
+        var difH = (scaleH - screenH) / scaleH;
+        x = _x * scaleW;
+        w = _w * scaleW;
+        y = (_y - difH / 2) * scaleH;
+        h = _h * scaleH;
+        if (_y < difH / 2) h -= (difH / 2 - _y) * scaleH;
+      }
+      debugPrint(
+          "${re["detectedClass"]} ${(re["confidenceInClass"] * 100).toStringAsFixed(0)}%");
+      label = re["detectedClass"].toString();
+      translated_label = translator.translate(label);
+      return Positioned(
+        left: math.max(0, x),
+        top: math.max(0, y),
+        width: w,
+        height: h,
+        child: Container(
+          padding: EdgeInsets.only(top: 5.0, left: 5.0),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Color.fromRGBO(37, 213, 253, 1.0),
+              width: 3.0,
             ),
           ),
-        );
-      }).toList();
-    }
+        ),
+      );
+    }).toList();
+  }*/
 
     return Stack(
       children: <Widget>[
-        Stack(children: _renderBoxes()),
+        //Stack(children: _renderStrings()),//_renderBoxes()),
         Align(
           alignment: Alignment.bottomCenter,
           child: Container(
@@ -82,7 +86,7 @@ class ResultState extends StatelessWidget {
               margin: EdgeInsets.only(bottom: 40),
               decoration: BoxDecoration(
                 color: Colors.white60,
-                borderRadius: BorderRadius.all(new Radius.circular(20.0)),
+                borderRadius: BorderRadius.all(new Radius.circular(15.0)),
               ),
               child: Stack(
                 alignment: Alignment.center,
@@ -110,7 +114,7 @@ class ResultState extends StatelessWidget {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               color: Colors.black,
-                              fontSize: 30,
+                              fontSize: 25,
                               fontWeight: FontWeight.bold),
                         ),
                         AnimatedOpacity(
@@ -124,11 +128,18 @@ class ResultState extends StatelessWidget {
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                     color: Colors.black,
-                                    fontSize: 30,
-                                    fontWeight: FontWeight.bold),
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.normal),
                               ),
                               Link(
-                                child: Text('Powered by Yandex.Translate'),
+                                child: Text(
+                                  'Powered by Yandex.Translate',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.black45,
+                                    fontSize: 10,
+                                  ),
+                                ),
                                 url: 'http://translate.yandex.com/',
                                 //onError: _showErrorSnackBar,
                               )

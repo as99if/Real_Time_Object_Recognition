@@ -1,3 +1,4 @@
+import 'package:ObejectOE/laguageModel.dart';
 import 'package:ObejectOE/translate.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
@@ -18,6 +19,8 @@ class CameraView extends StatefulWidget {
 }
 
 class _CameraViewState extends State<CameraView> {
+  Size screen;
+
   CameraController controller;
   bool isDetecting = false;
 
@@ -25,16 +28,28 @@ class _CameraViewState extends State<CameraView> {
   Map<String, dynamic> rec;
   int _imageHeight = 0;
   int _imageWidth = 0;
-  String _model = ssd;
-  Translate translator;
+  String _model = mobilenet;
 
-  static String secondaryLanguage = "en-bn";
+  LanguageListModel languageListModel;
+  static int _selectedLangauageIndex;
+  FixedExtentScrollController scrollController;
+  Translate translator;
+  static String secondaryLanguage;
+  static String label = '';
+  static String translated_label = '';
 
   @override
   void initState() {
     super.initState();
-    translator = Translate(lang: secondaryLanguage);
+
     _loadModel();
+    _selectedLangauageIndex = 5;
+    secondaryLanguage = 'bn';
+    languageListModel = new LanguageListModel();
+    scrollController =
+        FixedExtentScrollController(initialItem: _selectedLangauageIndex);
+    translator = new Translate();
+
     _initCamera();
   }
 
@@ -43,20 +58,93 @@ class _CameraViewState extends State<CameraView> {
     super.setState(fn);
   }
 
+  /*void _renderBoxes(var results) {
+    // ssd mobilenet
+    if (results.toString() == '[]') {
+      // mobilenet
+      label = '';
+      translated_label = '';
+    }
+    return results.map((re) {
+      var _x = re["rect"]["x"]; // ei part ta camera view e handle kore
+      var _w = re["rect"]
+          ["w"]; // only (x,y,w,h, label, translated_labe) ekhane pass korbo
+      var _y = re["rect"]["y"];
+      var _h = re["rect"]["h"];
+      var scaleW, scaleH, x, y, w, h;
+
+      if (screenH / screenW > previewH / previewW) {
+        scaleW = screenH / previewH * previewW;
+        scaleH = screenH;
+        var difW = (scaleW - screenW) / scaleW;
+        x = (_x - difW / 2) * scaleW;
+        w = _w * scaleW;
+        if (_x < difW / 2) w -= (difW / 2 - _x) * scaleW;
+        y = _y * scaleH;
+        h = _h * scaleH;
+      } else {
+        scaleH = screenW / previewW * previewH;
+        scaleW = screenW;
+        var difH = (scaleH - screenH) / scaleH;
+        x = _x * scaleW;
+        w = _w * scaleW;
+        y = (_y - difH / 2) * scaleH;
+        h = _h * scaleH;
+        if (_y < difH / 2) h -= (difH / 2 - _y) * scaleH;
+      }
+      debugPrint(
+          "${re["detectedClass"]} ${(re["confidenceInClass"] * 100).toStringAsFixed(0)}%");
+      label = re["detectedClass"].toString();
+      translated_label = translator.translate(label);
+      return Positioned(
+        left: math.max(0, x),
+        top: math.max(0, y),
+        width: w,
+        height: h,
+        child: Container(
+          padding: EdgeInsets.only(top: 5.0, left: 5.0),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Color.fromRGBO(37, 213, 253, 1.0),
+              width: 3.0,
+            ),
+          ),
+        ),
+      );
+    }).toList();
+  }*/
+
+  void _renderStrings(var results) {
+    if (results.toString() == '[]') {
+      label = '';
+      translated_label = '';
+    } else
+      return results.map((re) {
+        //debugPrint("${re["label"]} ${(re["confidence"] * 100).toStringAsFixed(0)}%");
+        label = re["label"].toString();
+        translated_label = translator.translate(label, secondaryLanguage);
+      }).toList();
+  }
+
   setRecognitions(recognitions, imageHeight, imageWidth) {
     setState(() {
-      _recognitions = recognitions;
-      _imageHeight = imageHeight;
-      _imageWidth = imageWidth;
+      _renderStrings(recognitions);
+      debugPrint('L: ' + label + 'Tr.L: ' + translated_label);
+
+      _recognitions = recognitions; // for ssd only
+      _imageHeight = imageHeight; // for ssd
+      _imageWidth = imageWidth; // for ssd
     });
   }
 
   _loadModel() async {
-    String res;
-    res = await Tflite.loadModel(
+    String res; // model initialize
+    /*res = await Tflite.loadModel(     
         model: "assets/ssd_mobilenet.tflite",
-        labels: "assets/ssd_mobilenet.txt");
-
+        labels: "assets/ssd_mobilenet.txt");*/
+    res = await Tflite.loadModel(
+        model: "assets/mobilenet_v1_1.0_224.tflite",
+        labels: "assets/mobilenet_v1_1.0_224.txt");
     debugPrint(res);
   }
 
@@ -81,7 +169,7 @@ class _CameraViewState extends State<CameraView> {
             //sleep(Duration(milliseconds: 1500));
             isDetecting = true;
 
-            Tflite.detectObjectOnFrame(
+            /*Tflite.detectObjectOnFrame(     //ssd mobilenet / yolo
               // default
               bytesList: img.planes.map((plane) {
                 return plane.bytes;
@@ -96,6 +184,21 @@ class _CameraViewState extends State<CameraView> {
             ).then((recognitions) {
               setRecognitions(recognitions, img.height, img.width);
               isDetecting = false;
+            });*/
+
+            Tflite.runModelOnFrame(
+                    bytesList: img.planes.map((plane) {
+                      return plane.bytes;
+                    }).toList(),
+                    imageHeight: img.height, // mobilenet
+                    imageWidth: img.width,
+                    numResults: 1,
+                    threshold: 0.65)
+                .then((recognitions) {
+              debugPrint(recognitions.toString());
+
+              setRecognitions(recognitions, img.height, img.width);
+              isDetecting = false;
             });
           }
         });
@@ -104,9 +207,8 @@ class _CameraViewState extends State<CameraView> {
   }
 
   Widget buildCameraView(BuildContext context) {
-    var tmp = MediaQuery.of(context).size;
-    var screenH = math.max(tmp.height, tmp.width);
-    var screenW = math.min(tmp.height, tmp.width);
+    var screenH = math.max(screen.height, screen.width);
+    var screenW = math.min(screen.height, screen.width);
     var previewSize = controller.value.previewSize;
     var previewH = math.max(previewSize.height, previewSize.width);
     var previewW = math.min(previewSize.height, previewSize.width);
@@ -124,6 +226,7 @@ class _CameraViewState extends State<CameraView> {
 
   @override
   Widget build(BuildContext context) {
+    screen = MediaQuery.of(context).size;
     if (controller == null || !controller.value.isInitialized) {
       return Center(
         child: ColorLoader2(
@@ -133,20 +236,19 @@ class _CameraViewState extends State<CameraView> {
         ),
       );
     }
-    Size screen = MediaQuery.of(context).size;
+
     return Scaffold(
       body: Stack(
         children: [
           buildCameraView(context),
           ResultState(
-            _recognitions == null ? [] : _recognitions,
-            math.max(_imageHeight, _imageWidth),
-            math.min(_imageHeight, _imageWidth),
-            screen.height,
-            screen.width,
-            _model,
-            translator,
-          ),
+              _recognitions == null ? [] : _recognitions,
+              math.max(_imageHeight, _imageWidth),
+              math.min(_imageHeight, _imageWidth),
+              screen.height,
+              screen.width,
+              label,
+              translated_label),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -161,35 +263,33 @@ class _CameraViewState extends State<CameraView> {
     );
   }
 
-  List<Text> languageList = [
-    Text('Bengali'),
-    Text('Latin'),
-    Text('Japanese'),
-    Text('Spanish'),
-  ];
-  static int _selectedLangauageIndex = 0;
-  FixedExtentScrollController scrollController =
-      FixedExtentScrollController(initialItem: _selectedLangauageIndex);
-
   Future<void> languagePickerPopUp() async {
     return showCupertinoModalPopup<void>(
       context: context,
       builder: (BuildContext context) {
-        return Row(
-          children: <Widget>[
-            Container(
-              height: 350,
-              width: MediaQuery.of(context).size.width,
-              child: CupertinoPicker(
-                itemExtent: 25,
-                onSelectedItemChanged: (int index) {
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: Container(
+            height: screen.height * .35,
+            width: screen.width * .8,
+            child: CupertinoPicker(
+              //diameterRatio: 1,
+              backgroundColor: Colors.white70,
+              looping: true,
+              squeeze: 1,
+              itemExtent: 30,
+              onSelectedItemChanged: (int index) {
+                setState(() {
                   _selectedLangauageIndex = index;
-                },
-                children: languageList,
-                scrollController: scrollController,
-              ),
+                  secondaryLanguage =
+                      languageListModel.langList[index]['langCode'];
+                  debugPrint(languageListModel.langList[index]['langCode']);
+                });
+              },
+              children: languageListModel.languageList,
+              scrollController: scrollController,
             ),
-          ],
+          ),
         );
       },
     );
@@ -198,6 +298,7 @@ class _CameraViewState extends State<CameraView> {
   @override
   void dispose() {
     controller?.dispose();
+    scrollController.dispose();
     super.dispose();
   }
 }
