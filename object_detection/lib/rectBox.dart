@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 
 import 'widgets/loader.dart';
 import 'package:link/link.dart';
 
 class ResultState extends StatelessWidget {
-  final List<dynamic> results;
-  final int previewH;
-  final int previewW;
+
   final double screenH;
   final double screenW;
 
   final String label;
   final String translated_label;
 
-  ResultState(this.results, this.previewH, this.previewW, this.screenH,
+  ResultState(this.screenH,
       this.screenW, this.label, this.translated_label);
 
   @override
@@ -35,7 +32,7 @@ class ResultState extends StatelessWidget {
       var scaleW, scaleH, x, y, w, h;
 
       if (screenH / screenW > previewH / previewW) {
-        scaleW = screenH / previewH * previewW;
+        scaleW = screenH / previewH * previewW; 
         scaleH = screenH;
         var difW = (scaleW - screenW) / scaleW;
         x = (_x - difW / 2) * scaleW;
@@ -84,6 +81,7 @@ class ResultState extends StatelessWidget {
               height: screenH * 0.2,
               width: screenW * 0.75,
               margin: EdgeInsets.only(bottom: 40),
+              padding: EdgeInsets.only(top: 20, bottom: 20),
               decoration: BoxDecoration(
                 color: Colors.white60,
                 borderRadius: BorderRadius.all(new Radius.circular(15.0)),

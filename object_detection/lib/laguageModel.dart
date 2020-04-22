@@ -4,14 +4,23 @@ import 'package:flutter/material.dart';
 class LanguageListModel{
 
 List<Widget> languageList;
+List<String> languageList1;
+
 
 LanguageListModel(){
-  languageList = new List<Widget>();
+  /*languageList = new List<Widget>();
   for (var item in langList) {
-    languageList.add(Padding(
+    languageList.add(
+      Padding(
       padding: EdgeInsets.only(top: 3, bottom:3),
-      child: Text(item['lang'])));
+      child: Text(item['lang']))
+      );
+  }*/
+  languageList1 = new List<String>();
+  for (var item in langList) {
+    languageList1.add(item['lang']);
   }
+
 }
 
 final List<Map<String, String>> langList = [

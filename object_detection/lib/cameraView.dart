@@ -1,14 +1,15 @@
 import 'package:ObejectOE/laguageModel.dart';
 import 'package:ObejectOE/translate.dart';
 import 'package:camera/camera.dart';
-import 'package:flutter/cupertino.dart';
+//import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:tflite/tflite.dart';
 import 'dart:math' as math;
 
-import 'models.dart';
+//import 'models.dart';
 import 'rectBox.dart';
 import 'widgets/loader.dart';
+import 'package:flutter_picker/flutter_picker.dart';
 
 class CameraView extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -25,14 +26,15 @@ class _CameraViewState extends State<CameraView> {
   bool isDetecting = false;
 
   List<dynamic> _recognitions;
-  Map<String, dynamic> rec;
-  int _imageHeight = 0;
+  
+  /*int _imageHeight = 0;
   int _imageWidth = 0;
-  String _model = mobilenet;
+  String _model = mobilenet;*/
+  Map<String, dynamic> rec;
 
-  LanguageListModel languageListModel;
-  static int _selectedLangauageIndex;
+  int _selectedLangauageIndex;
   FixedExtentScrollController scrollController;
+  LanguageListModel languageListModel;
   Translate translator;
   static String secondaryLanguage;
   static String label = '';
@@ -43,7 +45,8 @@ class _CameraViewState extends State<CameraView> {
     super.initState();
 
     _loadModel();
-    _selectedLangauageIndex = 5;
+    if (_selectedLangauageIndex == null) _selectedLangauageIndex = 5;
+    
     secondaryLanguage = 'bn';
     languageListModel = new LanguageListModel();
     scrollController =
@@ -51,6 +54,7 @@ class _CameraViewState extends State<CameraView> {
     translator = new Translate();
 
     _initCamera();
+    debugPrint('init');
   }
 
   @override
@@ -129,11 +133,11 @@ class _CameraViewState extends State<CameraView> {
   setRecognitions(recognitions, imageHeight, imageWidth) {
     setState(() {
       _renderStrings(recognitions);
-      debugPrint('L: ' + label + 'Tr.L: ' + translated_label);
+      //debugPrint('L: ' + label + 'Tr.L: ' + translated_label);
 
-      _recognitions = recognitions; // for ssd only
-      _imageHeight = imageHeight; // for ssd
-      _imageWidth = imageWidth; // for ssd
+      //_recognitions = recognitions; // for ssd only
+      //_imageHeight = imageHeight; // for ssd
+      //_imageWidth = imageWidth; // for ssd
     });
   }
 
@@ -145,14 +149,14 @@ class _CameraViewState extends State<CameraView> {
     res = await Tflite.loadModel(
         model: "assets/mobilenet_v1_1.0_224.tflite",
         labels: "assets/mobilenet_v1_1.0_224.txt");
-    debugPrint(res);
+    //debugPrint(res);
   }
 
   _initCamera() {
     if (widget.cameras == null || widget.cameras.length < 1) {
-      debugPrint('No camera is found');
+      //debugPrint('No camera is found');
     } else {
-      debugPrint("Model: " + _model);
+      //debugPrint("Model: " + _model);
 
       controller = new CameraController(
           widget.cameras[0], ResolutionPreset.high,
@@ -196,7 +200,6 @@ class _CameraViewState extends State<CameraView> {
                     threshold: 0.65)
                 .then((recognitions) {
               debugPrint(recognitions.toString());
-
               setRecognitions(recognitions, img.height, img.width);
               isDetecting = false;
             });
@@ -242,9 +245,6 @@ class _CameraViewState extends State<CameraView> {
         children: [
           buildCameraView(context),
           ResultState(
-              _recognitions == null ? [] : _recognitions,
-              math.max(_imageHeight, _imageWidth),
-              math.min(_imageHeight, _imageWidth),
               screen.height,
               screen.width,
               label,
@@ -252,7 +252,8 @@ class _CameraViewState extends State<CameraView> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => languagePickerPopUp(), //languagePickerPopUp(context),
+        onPressed: () =>
+            showPickerModal(context), //languagePickerPopUp(context),
         backgroundColor: Colors.black,
         child: Icon(
           Icons.translate,
@@ -262,38 +263,34 @@ class _CameraViewState extends State<CameraView> {
       ),
     );
   }
-
-  Future<void> languagePickerPopUp() async {
-    return showCupertinoModalPopup<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return Align(
-          alignment: Alignment.bottomCenter,
-          child: Container(
-            height: screen.height * .35,
-            width: screen.width * .8,
-            child: CupertinoPicker(
-              //diameterRatio: 1,
-              backgroundColor: Colors.white70,
-              looping: true,
-              squeeze: 1,
-              itemExtent: 30,
-              onSelectedItemChanged: (int index) {
-                setState(() {
-                  _selectedLangauageIndex = index;
-                  secondaryLanguage =
-                      languageListModel.langList[index]['langCode'];
-                  debugPrint(languageListModel.langList[index]['langCode']);
-                });
-              },
-              children: languageListModel.languageList,
-              scrollController: scrollController,
-            ),
-          ),
-        );
+  List<int> _index;
+  showPickerModal(BuildContext context) {
+    _index = new List<int>();
+    _index.add(_selectedLangauageIndex);
+    new Picker(
+      selecteds: _index,
+      title: Text('Language', style: TextStyle(fontSize: 22),),
+      height: 200,
+      itemExtent: 35,
+      textStyle: TextStyle(fontSize: 20, color: Colors.black),
+      textAlign: TextAlign.center,
+      selectedTextStyle: TextStyle(fontSize: 22, fontWeight: FontWeight.w400),
+      adapter: PickerDataAdapter<String>(
+          pickerdata: languageListModel.languageList1),
+      changeToFirst: false,
+      hideHeader: false,
+      onConfirm: (Picker picker, List index) {
+        setState(() {
+          _selectedLangauageIndex = index[0];
+          //debugPrint('onChanged : ' + _selectedLangauageIndex.toString());
+          secondaryLanguage = languageListModel.langList[_selectedLangauageIndex]['langCode'];
+          //debugPrint(languageListModel.langList[_selectedLangauageIndex]['lang'] + '  ' 
+          //          + languageListModel.langList[_selectedLangauageIndex]['langCode']);
+        });
       },
-    );
+    ).showModal(this.context); //_scaffoldKey.currentState);
   }
+
 
   @override
   void dispose() {

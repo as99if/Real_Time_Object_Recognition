@@ -1,5 +1,4 @@
 
-import 'package:ObejectOE/translate.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'cameraView.dart';
@@ -12,13 +11,12 @@ Future<void> main() async {
   try {
     cameras = await availableCameras();
   } on CameraException catch (e) {
-    print('Error: $e.code\nError Message: $e.message');
+    debugPrint('Error: $e.code\nError Message: $e.message');
   }
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
