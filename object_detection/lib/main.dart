@@ -2,6 +2,7 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'cameraView.dart';
+import 'spalshPage.dart';
 
 
 List<CameraDescription> cameras;
@@ -24,7 +25,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.red,
       ),
-      home: CameraView(cameras),
+      home: SplashPage(cameras),
     );
   }
 }

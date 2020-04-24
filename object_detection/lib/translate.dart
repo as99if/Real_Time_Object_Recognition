@@ -18,7 +18,6 @@ class Translate{
         var responseData = json.decode(response.body);
         return responseData['text'][0];
       } else {
-        //return null;
         throw Exception("Failed to get");
       }
   }
