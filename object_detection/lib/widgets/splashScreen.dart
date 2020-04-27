@@ -104,7 +104,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
                       new CircleAvatar(
-                        backgroundColor: Colors.redAccent,
+                        backgroundColor: Colors.red[800],
                         child: new Container(child: widget.image),
                         radius: widget.photoSize,
                       ),

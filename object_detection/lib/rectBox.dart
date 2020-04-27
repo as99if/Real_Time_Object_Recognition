@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'widgets/loader.dart';
 import 'package:link/link.dart';
@@ -110,11 +111,9 @@ class ResultState extends StatelessWidget {
                           // english result
                           label,
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 25,
-                              fontWeight: FontWeight.bold),
+                          style: GoogleFonts.ubuntuCondensed(fontSize: 25), 
                         ),
+                        Padding(padding: EdgeInsets.only(top: 10)),
                         AnimatedOpacity(
                           opacity: translated_label == '' ? 0 : 1,
                           duration: Duration(milliseconds: 200),

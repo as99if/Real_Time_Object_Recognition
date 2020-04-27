@@ -1,7 +1,8 @@
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'cameraView.dart';
+import 'package:flutter/services.dart';
 import 'spalshPage.dart';
 
 
@@ -14,6 +15,10 @@ Future<void> main() async {
   } on CameraException catch (e) {
     debugPrint('Error: $e.code\nError Message: $e.message');
   }
+  LicenseRegistry.addLicense(() async* {
+    final license = await rootBundle.loadString('google_fonts/OFL.txt');
+    yield LicenseEntryWithLineBreaks(['google_fonts'], license);
+  });
   runApp(MyApp());
 }
 

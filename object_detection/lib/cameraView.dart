@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:ObejectOE/laguageModel.dart';
 import 'package:ObejectOE/translate.dart';
 import 'package:camera/camera.dart';
@@ -5,6 +7,8 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:tflite/tflite.dart';
 import 'dart:math' as math;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 //import 'models.dart';
 import 'rectBox.dart';
@@ -26,7 +30,7 @@ class _CameraViewState extends State<CameraView> {
   bool isDetecting = false;
 
   List<dynamic> _recognitions;
-  
+
   /*int _imageHeight = 0;
   int _imageWidth = 0;
   String _model = mobilenet;*/
@@ -40,13 +44,29 @@ class _CameraViewState extends State<CameraView> {
   static String label = '';
   static String translated_label = '';
 
+  bool ifFirst = true;
+
+  checkIfFirstRun() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('ifFirst') == null) {
+      prefs.setBool('ifFirst', false);
+      ifFirst = true;
+      //debugPrint('First Run');
+    } else {
+      ifFirst = false;
+      //debugPrint('Not First Run');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
 
+    checkIfFirstRun();
+
     _loadModel();
     if (_selectedLangauageIndex == null) _selectedLangauageIndex = 5;
-    
+
     secondaryLanguage = 'bn';
     languageListModel = new LanguageListModel();
     scrollController =
@@ -54,6 +74,7 @@ class _CameraViewState extends State<CameraView> {
     translator = new Translate();
 
     _initCamera();
+
     debugPrint('init');
   }
 
@@ -227,8 +248,73 @@ class _CameraViewState extends State<CameraView> {
     );
   }
 
+  Widget tips() {
+    Timer(Duration(seconds: 10), () {
+      if (ifFirst == true) ifFirst = false;
+    });
+    return AnimatedOpacity(
+      opacity: ifFirst ? 1.00 : 0.0,
+      duration: Duration(milliseconds: 1000),
+      child: Stack(children: <Widget>[
+        Center(
+          child: Container(
+            padding: EdgeInsets.fromLTRB(15, 30, 15, 30),
+            //width: 250,
+            child: Text(
+              "Keep it steady here... \n I'm just an app",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.overpass(
+                fontSize: 20
+              )/*TextStyle(
+                fontSize: 20,
+              ),*/
+            ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.red[100], Colors.red],
+                stops: [0.0, 0.5],
+              ),
+                color: Color.fromRGBO(255, 0, 0, .7),
+                borderRadius: BorderRadius.all(new Radius.circular(8.0)),
+              )
+          ),
+        ),
+        Positioned(
+          right: 50,
+          bottom: 80,
+          child: InkWell(
+            onTap: () {
+              ifFirst = false;
+            },
+            child: Container(
+              padding: EdgeInsets.all(10),
+              //height: 30,
+              //width: 150,
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.all(new Radius.circular(8.0)),
+                gradient: LinearGradient(
+                colors: [Colors.red[100], Colors.red],
+                stops: [0.0, 0.7],
+              ),
+              ),
+              child: Text(
+                'Keep me online and\nselect your language!',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.overpass(
+                fontSize: 15
+              )
+              ),
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    
     screen = MediaQuery.of(context).size;
     if (controller == null || !controller.value.isInitialized) {
       return Center(
@@ -244,11 +330,11 @@ class _CameraViewState extends State<CameraView> {
       body: Stack(
         children: [
           buildCameraView(context),
-          ResultState(
-              screen.height,
-              screen.width,
-              label,
-              translated_label),
+          ResultState(screen.height, screen.width, label, translated_label),
+          /*ifFirst == true ? Center(
+            child: Text('Learn!'),
+          ) : Container(height: 0,),*/
+          tips(),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -263,13 +349,17 @@ class _CameraViewState extends State<CameraView> {
       ),
     );
   }
+
   List<int> _index;
   showPickerModal(BuildContext context) {
     _index = new List<int>();
     _index.add(_selectedLangauageIndex);
     new Picker(
       selecteds: _index,
-      title: Text('Language', style: TextStyle(fontSize: 22),),
+      title: Text(
+        'Language',
+        style: TextStyle(fontSize: 22),
+      ),
       height: 200,
       itemExtent: 35,
       textStyle: TextStyle(fontSize: 20, color: Colors.black),
@@ -283,14 +373,14 @@ class _CameraViewState extends State<CameraView> {
         setState(() {
           _selectedLangauageIndex = index[0];
           //debugPrint('onChanged : ' + _selectedLangauageIndex.toString());
-          secondaryLanguage = languageListModel.langList[_selectedLangauageIndex]['langCode'];
-          //debugPrint(languageListModel.langList[_selectedLangauageIndex]['lang'] + '  ' 
+          secondaryLanguage =
+              languageListModel.langList[_selectedLangauageIndex]['langCode'];
+          //debugPrint(languageListModel.langList[_selectedLangauageIndex]['lang'] + '  '
           //          + languageListModel.langList[_selectedLangauageIndex]['langCode']);
         });
       },
     ).showModal(this.context); //_scaffoldKey.currentState);
   }
-
 
   @override
   void dispose() {
