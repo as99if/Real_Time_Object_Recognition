@@ -258,26 +258,24 @@ class _CameraViewState extends State<CameraView> {
       child: Stack(children: <Widget>[
         Center(
           child: Container(
-            padding: EdgeInsets.fromLTRB(15, 30, 15, 30),
-            //width: 250,
-            child: Text(
-              "Keep it steady here... \n I'm just an app",
-              textAlign: TextAlign.center,
-              style: GoogleFonts.overpass(
-                fontSize: 20
-              )/*TextStyle(
+              padding: EdgeInsets.fromLTRB(15, 30, 15, 30),
+              //width: 250,
+              child: Text("Keep it steady here... \n I'm just an app",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.overpass(
+                      fontSize:
+                          20) /*TextStyle(
                 fontSize: 20,
               ),*/
-            ),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.red[100], Colors.red],
-                stops: [0.0, 0.5],
-              ),
+                  ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.red[100], Colors.red],
+                  stops: [0.0, 0.8],
+                ),
                 color: Color.fromRGBO(255, 0, 0, .7),
                 borderRadius: BorderRadius.all(new Radius.circular(8.0)),
-              )
-          ),
+              )),
         ),
         Positioned(
           right: 50,
@@ -291,20 +289,16 @@ class _CameraViewState extends State<CameraView> {
               //height: 30,
               //width: 150,
               decoration: BoxDecoration(
-                color: Colors.red,
+                color: Color.fromRGBO(255, 0, 0, 1),
                 borderRadius: BorderRadius.all(new Radius.circular(8.0)),
                 gradient: LinearGradient(
-                colors: [Colors.red[100], Colors.red],
-                stops: [0.0, 0.7],
+                  colors: [Colors.red[100], Colors.red],
+                  stops: [0.0, 0.8],
+                ),
               ),
-              ),
-              child: Text(
-                'Keep me online and\nselect your language!',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.overpass(
-                fontSize: 15
-              )
-              ),
+              child: Text('Keep me online and\nselect your language!',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.overpass(fontSize: 15)),
             ),
           ),
         ),
@@ -314,7 +308,6 @@ class _CameraViewState extends State<CameraView> {
 
   @override
   Widget build(BuildContext context) {
-    
     screen = MediaQuery.of(context).size;
     if (controller == null || !controller.value.isInitialized) {
       return Center(
